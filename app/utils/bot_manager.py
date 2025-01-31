@@ -1,7 +1,7 @@
 # bot_manager.py
 import threading
 from typing import Dict
-from app.models.models import TradingBot
+from app.utils.trading_bot import TradingBot
 
 class BotManager:
     def __init__(self):

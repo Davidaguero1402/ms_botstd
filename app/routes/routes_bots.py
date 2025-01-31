@@ -7,7 +7,7 @@ from typing import List
 from fastapi import APIRouter
 from app.models.models import Bot
 from app.schemas.schemas import BotInDB
-from app.utils import bot_manager
+from app.utils.bot_manager import bot_manager 
 
 router = APIRouter(prefix="/api/v1/bots", tags=["bots"])
 

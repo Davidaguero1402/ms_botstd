@@ -1,10 +1,11 @@
 from app import Base as db
+from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey
 
-class AuditoriaBot(db.Model):
+class AuditoriaBot(db):
     __tablename__ = 'auditoria_bot'
-    id = db.Column(db.Integer, primary_key=True)
-    bot_id = db.Column(db.Integer, db.ForeignKey('Bots.id'), nullable=False)
-    fecha = db.Column(db.DateTime, nullable=False)
-    tipo_evento = db.Column(db.String(50), nullable=False)
-    descripcion = db.Column(db.Text, nullable=False)
-    datos = db.Column(db.Text, nullable=True)
+    id = Column(Integer, primary_key=True)
+    bot_id = Column(Integer, ForeignKey('Bots.id'), nullable=False)
+    fecha = Column(DateTime, nullable=False)
+    tipo_evento = Column(String(50), nullable=False)
+    descripcion = Column(Text, nullable=False)
+    datos = Column(Text, nullable=True)

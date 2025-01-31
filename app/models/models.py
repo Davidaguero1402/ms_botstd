@@ -3,8 +3,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
 import enum
 from time import time
+from app.db.database import Base
 
-Base = declarative_base()
 
 class BotStatus(enum.Enum):
     IDLE = "idle"

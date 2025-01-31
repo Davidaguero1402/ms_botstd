@@ -6,12 +6,13 @@ from datetime import datetime
 from sqlalchemy.orm import scoped_session, sessionmaker
 from ccxt import ExchangeError, NetworkError
 from app import db  # Asegúrate de que esto use SQLAlchemy correctamente
-from app.models import Bot, AuditoriaBot
+from app.models import Bot
 from app.models.exchanges import Exchanges
 from app.models.estrategias import Estrategias 
 from app.models.activos import Activos
 import ccxt
 from app.models.operacionactiva import OperacionActiva
+from app.models.auditoriabot import AuditoriaBot
 
 logging.basicConfig(
     level=logging.INFO,

@@ -1,11 +1,12 @@
 from app import Base as db
+from sqlalchemy import Column, Integer, String
 
-class Exchanges(db.Model):
+class Exchanges(db):
     __tablename__ = 'Exchanges'
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    nombre = db.Column(db.String(120))
-    api_key = db.Column(db.String(255))
-    secret_key = db.Column(db.String(255))
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    nombre = Column(String(120))
+    api_key = Column(String(255))
+    secret_key = Column(String(255))
 
     def fetch_margin_balance(self):
         # Implementación del método

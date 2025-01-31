@@ -1,11 +1,13 @@
 from app import Base as db
+from sqlalchemy import Column, Integer, String
+from sqlalchemy.orm import relationship
 
-class Activos(db.Model):
+class Activos(db):
     __tablename__ = 'Activos'
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    nombre = db.Column(db.String(120))
-    simbolo = db.Column(db.String(10))
-    tipo = db.Column(db.String(50))
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    nombre = Column(String(120))
+    simbolo = Column(String(10))
+    tipo = Column(String(50))
 
-    operaciones = db.relationship('Operaciones', backref='activo', lazy=True)
+    operaciones = relationship('Operaciones', backref='activo', lazy=True)
     
