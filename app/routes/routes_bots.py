@@ -5,6 +5,9 @@ from app import get_db
 from datetime import datetime
 from typing import List
 from fastapi import APIRouter
+from app.models.models import Bot
+from app.schemas.schemas import BotInDB
+from app.utils import bot_manager
 
 router = APIRouter(prefix="/api/v1/bots", tags=["bots"])
 
@@ -52,24 +55,56 @@ def delete_bot(bot_id: int, db: Session = Depends(get_db)):
     db.commit()
     return bot
 
+# Para /start (versión definitiva)
 @router.post("/{bot_id}/start", response_model=schemas.BotInDB)
 def start_bot(bot_id: int, db: Session = Depends(get_db)):
     bot = db.query(models.Bot).filter(models.Bot.id == bot_id).first()
-    if bot is None:
+    if not bot:
         raise HTTPException(status_code=404, detail="Bot not found")
+    
+    # Inicia el bot en un hilo
+    bot_manager.start_bot(bot_id)  # <-- Key: Ejecuta el TradingBot
+    
+    # Actualiza el estado en la DB
     bot.status = models.BotStatus.RUNNING
     db.commit()
     db.refresh(bot)
+    
     return bot
 
+# Para /stop (versión definitiva)
 @router.post("/{bot_id}/stop", response_model=schemas.BotInDB)
 def stop_bot(bot_id: int, db: Session = Depends(get_db)):
     bot = db.query(models.Bot).filter(models.Bot.id == bot_id).first()
-    if bot is None:
+    if not bot:
         raise HTTPException(status_code=404, detail="Bot not found")
+    
+    # Detén el bot
+    bot_manager.stop_bot(bot_id)  # <-- Key: Detiene el TradingBot
+    
+    # Actualiza el estado en la DB
     bot.status = models.BotStatus.STOPPED
     db.commit()
     db.refresh(bot)
+    
+    return bot
+
+@router.post("/{bot_id}/stop", response_model=BotInDB)
+def stop_bot(
+    bot_id: int,
+    db: Session = Depends(get_db),
+):
+    bot = db.query(Bot).filter(Bot.id == bot_id).first()
+    if not bot:
+        raise HTTPException(status_code=404, detail="Bot not found")
+    
+    # Detén el bot (implementa lógica de parada en TradingBot si es necesario)
+    bot_manager.stop_bot(bot_id)
+    
+    # Actualiza el estado en la base de datos
+    bot.status = "stopped"
+    db.commit()
+    
     return bot
 
 @router.get("/{bot_id}/status", response_model=schemas.BotStatus)
