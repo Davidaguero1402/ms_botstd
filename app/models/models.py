@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, Float, JSON, DateTime, Enum
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
+from sqlalchemy.orm import relationship
 import enum
 from time import time
 from app.db.database import Base
@@ -15,7 +16,7 @@ class BotStatus(enum.Enum):
 class Bot(Base):
     __tablename__ = "bots"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     name = Column(String, index=True)
     strategy = Column(String)
     exchange_id = Column(String)
@@ -24,4 +25,5 @@ class Bot(Base):
     status = Column(Enum(BotStatus), default=BotStatus.IDLE)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    operaciones = relationship("OperacionActiva", back_populates="bot")
 
