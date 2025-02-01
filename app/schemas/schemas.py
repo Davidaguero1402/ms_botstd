@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from typing import Dict, Optional
 from datetime import datetime
-from app.models import BotStatus
+from app.models.bot import BotStatus
 
 class BotConfig(BaseModel):
     risk_percentage: float

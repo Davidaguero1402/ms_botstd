@@ -1,7 +1,7 @@
 import enum
 from sqlalchemy import Column, Integer, Float, DateTime, String, ForeignKey, Enum
 from sqlalchemy.orm import relationship
-from app.db import Base  # Asegúrate que Base sea la instancia correcta de declarative_base()
+from app.db.database import Base
 from datetime import datetime
 
 # Definición de Enums
@@ -28,4 +28,4 @@ class OperacionActiva(Base):
     estado = Column(Enum(EstadoOperacion), nullable=False, default=EstadoOperacion.ACTIVA)  # Y aquí
 
     # Relación opcional
-    bot = relationship("Bots", back_populates="Operaciones_activas")
+    bot = relationship("Bot", back_populates="Operaciones_activas")

@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
-from app.db import Base
+from app.db.database import Base
 
 class Activos(Base):
     __tablename__ = 'Activos'  # Nombre de tabla en minúscula

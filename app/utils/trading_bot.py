@@ -5,8 +5,8 @@ import logging
 from datetime import datetime
 from sqlalchemy.orm import scoped_session, sessionmaker
 from ccxt import ExchangeError, NetworkError
-from app import db  # Asegúrate de que esto use SQLAlchemy correctamente
-from app.models import Bot
+from app.db.database import engine
+from app.models.bot import Bot
 from app.models.exchanges import Exchanges
 from app.models.estrategias import Estrategias 
 from app.models.activos import Activos
@@ -24,7 +24,7 @@ class TradingBot:
         self.bot_id = bot_id
         self.running = False
         self._stop_event = threading.Event()
-        self.db_session = db_session or scoped_session(sessionmaker(bind=db.engine))  # Sesión por hilo
+        self.db_session = db_session or scoped_session(sessionmaker(bind=engine))  # Sesión por hilo
         self.bot = None
         self.exchange = None
         self.active_operation = None

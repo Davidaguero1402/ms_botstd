@@ -1,11 +1,11 @@
-from app import app, schemas, models
+from app import app, schemas
 from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session
 from app import get_db
 from datetime import datetime
 from typing import List
 from fastapi import APIRouter
-from app.models.models import Bot
+from app.models.bot import Bot
 from app.schemas.schemas import BotInDB
 from app.utils.bot_manager import bot_manager 
 
@@ -13,7 +13,7 @@ router = APIRouter(prefix="/api/v1/bots", tags=["bots"])
 
 @router.post("/", response_model=schemas.BotInDB)
 def create_bot(bot: schemas.BotCreate, db: Session = Depends(get_db)):
-    db_bot = models.Bot(**bot.dict())
+    db_bot = bot.Bot(**bot.dict())
     db.add(db_bot)
     db.commit()
     db.refresh(db_bot)
@@ -21,19 +21,19 @@ def create_bot(bot: schemas.BotCreate, db: Session = Depends(get_db)):
 
 @router.get("/", response_model=List[schemas.BotInDB])
 def list_bots(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    bots = db.query(models.Bot).offset(skip).limit(limit).all()
+    bots = db.query(Bot).offset(skip).limit(limit).all()
     return bots
 
 @router.get("/{bot_id}", response_model=schemas.BotInDB)
 def get_bot(bot_id: int, db: Session = Depends(get_db)):
-    bot = db.query(models.Bot).filter(models.Bot.id == bot_id).first()
+    bot = db.query(bot.Bot).filter(bot.Bot.id == bot_id).first()
     if bot is None:
         raise HTTPException(status_code=404, detail="Bot not found")
     return bot
 
 @router.put("/{bot_id}", response_model=schemas.BotInDB)
 def update_bot(bot_id: int, bot: schemas.BotUpdate, db: Session = Depends(get_db)):
-    db_bot = db.query(models.Bot).filter(models.Bot.id == bot_id).first()
+    db_bot = db.query(bot.Bot).filter(bot.Bot.id == bot_id).first()
     if db_bot is None:
         raise HTTPException(status_code=404, detail="Bot not found")
     
@@ -48,7 +48,7 @@ def update_bot(bot_id: int, bot: schemas.BotUpdate, db: Session = Depends(get_db
 
 @router.delete("/{bot_id}", response_model=schemas.BotInDB)
 def delete_bot(bot_id: int, db: Session = Depends(get_db)):
-    bot = db.query(models.Bot).filter(models.Bot.id == bot_id).first()
+    bot = db.query(bot.Bot).filter(bot.Bot.id == bot_id).first()
     if bot is None:
         raise HTTPException(status_code=404, detail="Bot not found")
     db.delete(bot)
@@ -58,7 +58,7 @@ def delete_bot(bot_id: int, db: Session = Depends(get_db)):
 # Para /start (versión definitiva)
 @router.post("/{bot_id}/start", response_model=schemas.BotInDB)
 def start_bot(bot_id: int, db: Session = Depends(get_db)):
-    bot = db.query(models.Bot).filter(models.Bot.id == bot_id).first()
+    bot = db.query(bot.Bot).filter(bot.Bot.id == bot_id).first()
     if not bot:
         raise HTTPException(status_code=404, detail="Bot not found")
     
@@ -66,7 +66,7 @@ def start_bot(bot_id: int, db: Session = Depends(get_db)):
     bot_manager.start_bot(bot_id)  # <-- Key: Ejecuta el TradingBot
     
     # Actualiza el estado en la DB
-    bot.status = models.BotStatus.RUNNING
+    bot.status = bot.BotStatus.RUNNING
     db.commit()
     db.refresh(bot)
     
@@ -75,7 +75,7 @@ def start_bot(bot_id: int, db: Session = Depends(get_db)):
 # Para /stop (versión definitiva)
 @router.post("/{bot_id}/stop", response_model=schemas.BotInDB)
 def stop_bot(bot_id: int, db: Session = Depends(get_db)):
-    bot = db.query(models.Bot).filter(models.Bot.id == bot_id).first()
+    bot = db.query(bot.Bot).filter(bot.Bot.id == bot_id).first()
     if not bot:
         raise HTTPException(status_code=404, detail="Bot not found")
     
@@ -83,7 +83,7 @@ def stop_bot(bot_id: int, db: Session = Depends(get_db)):
     bot_manager.stop_bot(bot_id)  # <-- Key: Detiene el TradingBot
     
     # Actualiza el estado en la DB
-    bot.status = models.BotStatus.STOPPED
+    bot.status = bot.BotStatus.STOPPED
     db.commit()
     db.refresh(bot)
     
@@ -109,7 +109,7 @@ def stop_bot(
 
 @router.get("/{bot_id}/status", response_model=schemas.BotStatus)
 def get_bot_status(bot_id: int, db: Session = Depends(get_db)):
-    bot = db.query(models.Bot).filter(models.Bot.id == bot_id).first()
+    bot = db.query(bot.Bot).filter(bot.Bot.id == bot_id).first()
     if bot is None:
         raise HTTPException(status_code=404, detail="Bot not found")
     # Here you would typically fetch the current position and other status details from your trading system
@@ -128,7 +128,7 @@ def get_bot_trades(bot_id: int, start_date: datetime = None, end_date: datetime 
 
 @router.get("/{bot_id}/performance", response_model=schemas.BotPerformance)
 def get_bot_performance(bot_id: int, db: Session = Depends(get_db)):
-    bot = db.query(models.Bot).filter(models.Bot.id == bot_id).first()
+    bot = db.query(bot.Bot).filter(bot.Bot.id == bot_id).first()
     if bot is None:
         raise HTTPException(status_code=404, detail="Bot not found")
     # Here you would typically calculate these metrics based on the bot's trade history

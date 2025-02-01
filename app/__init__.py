@@ -1,8 +1,8 @@
 from fastapi import FastAPI
-from app.models import models
+from app.models.bot import Bot
 from app.db import engine, SessionLocal, Base
 from app.models.activos import Activos
-from app.models import Bot
+from app.models.bot import Bot
 from app.models.auditoriabot import AuditoriaBot
 from app.models.estrategias import Estrategias
 from app.models.exchanges import Exchanges

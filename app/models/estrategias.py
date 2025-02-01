@@ -1,4 +1,4 @@
-from app import Base as db
+from app.db.database import Base as db
 from sqlalchemy import Column, Integer, String, Text
 
 class Estrategias(db):
