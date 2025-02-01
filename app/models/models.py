@@ -14,7 +14,7 @@ class BotStatus(enum.Enum):
     ERROR = "error"
 
 class Bot(Base):
-    __tablename__ = "bots"
+    __tablename__ = "Bots"
 
     id = Column(Integer, primary_key=True)
     name = Column(String, index=True)
@@ -25,5 +25,5 @@ class Bot(Base):
     status = Column(Enum(BotStatus), default=BotStatus.IDLE)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    operaciones = relationship("OperacionActiva", back_populates="bot")
+    operaciones = relationship("OperacionActiva", back_populates="Bot")
 

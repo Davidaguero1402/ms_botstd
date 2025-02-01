@@ -15,10 +15,10 @@ class EstadoOperacion(str, enum.Enum):
     CANCELADA = "CANCELADA"
 
 class OperacionActiva(Base):
-    __tablename__ = 'operaciones_activas'
+    __tablename__ = 'Operaciones_activas'
 
     id = Column(Integer, primary_key=True)
-    bot_id = Column(Integer, ForeignKey('bots.id'), nullable=False)  # Nombre de tabla en minúscula
+    bot_id = Column(Integer, ForeignKey('Bots.id'), nullable=False)  # Nombre de tabla en minúscula
     precio_entrada = Column(Float, nullable=False)
     cantidad = Column(Float, nullable=False)
     fecha_entrada = Column(DateTime, default=datetime.utcnow, nullable=False)
@@ -28,4 +28,4 @@ class OperacionActiva(Base):
     estado = Column(Enum(EstadoOperacion), nullable=False, default=EstadoOperacion.ACTIVA)  # Y aquí
 
     # Relación opcional
-    bot = relationship("Bots", back_populates="operaciones_activas")
+    bot = relationship("Bots", back_populates="Operaciones_activas")
