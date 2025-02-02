@@ -15,7 +15,7 @@ class EstadoOperacion(str, enum.Enum):
     CANCELADA = "CANCELADA"
 
 class OperacionActiva(Base):
-    __tablename__ = 'Operaciones_activas'
+    __tablename__ = 'Operaciones_Activas'
 
     id = Column(Integer, primary_key=True)
     bot_id = Column(Integer, ForeignKey('Bots.id'), nullable=False)  # Nombre de tabla en minúscula
@@ -28,4 +28,4 @@ class OperacionActiva(Base):
     estado = Column(Enum(EstadoOperacion), nullable=False, default=EstadoOperacion.ACTIVA)  # Y aquí
 
     # Relación opcional
-    bot = relationship("Bot", back_populates="Operaciones_activas")
+    bot = relationship("Bot", back_populates="operaciones_activas")

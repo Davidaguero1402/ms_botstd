@@ -11,28 +11,33 @@ class BotConfig(BaseModel):
 class BotCreate(BaseModel):
     name: str
     strategy: str
-    exchange_id: str
+    exchange_id: int
     symbol: str
     config: BotConfig
 
 class BotUpdate(BaseModel):
     name: Optional[str] = None
     strategy: Optional[str] = None
-    exchange_id: Optional[str] = None
+    exchange_id: Optional[int] = None
     symbol: Optional[str] = None
     config: Optional[BotConfig] = None
 
-class BotInDB(BotCreate):
+class BotInDB(BaseModel):
     id: int
-    status: BotStatus
+    name: str
+    strategy: str
+    exchange_id: int  # Tipo correcto
+    symbol: str
+    config: BotConfig
+    status: BotStatus  # Enum del modelo
     created_at: datetime
     updated_at: datetime
-
+    
     class Config:
         orm_mode = True
 
-class BotStatus(BaseModel):
-    status: BotStatus
+class BotStatusInfo(BaseModel):  # Renombrado para evitar conflicto
+    status: BotStatus  # Referencia al enum
     current_position: Dict
     last_update: datetime
     error: Optional[str] = None

@@ -12,8 +12,8 @@ from app.utils.bot_manager import bot_manager
 router = APIRouter(prefix="/api/v1/bots", tags=["bots"])
 
 @router.post("/", response_model=schemas.BotInDB)
-def create_bot(bot: schemas.BotCreate, db: Session = Depends(get_db)):
-    db_bot = bot.Bot(**bot.dict())
+def create_bot(bot_data: schemas.BotCreate, db: Session = Depends(get_db)):
+    db_bot = Bot(**bot_data.dict())
     db.add(db_bot)
     db.commit()
     db.refresh(db_bot)

@@ -3,7 +3,7 @@ from sqlalchemy.orm import relationship
 from app.db.database import Base
 
 class Activos(Base):
-    __tablename__ = 'Activos'  # Nombre de tabla en minúscula
+    __tablename__ = 'Activos'
     
     id = Column(Integer, primary_key=True)
     nombre = Column(String(120))

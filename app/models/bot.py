@@ -19,11 +19,11 @@ class Bot(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String, index=True)
     strategy = Column(String)
-    exchange_id = Column(String)
+    exchange_id = Column(Integer)
     symbol = Column(String)
     config = Column(JSON)
     status = Column(Enum(BotStatus), default=BotStatus.IDLE)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    operaciones = relationship("OperacionActiva", back_populates="Bot")
+    operaciones = relationship("OperacionActiva", back_populates="bot")
 
