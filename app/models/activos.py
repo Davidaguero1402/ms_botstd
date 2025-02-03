@@ -3,7 +3,7 @@ from sqlalchemy.orm import relationship
 from app.db.database import Base
 
 class Activos(Base):
-    __tablename__ = 'Activos'
+    __tablename__ = 'activos'
     
     id = Column(Integer, primary_key=True)
     nombre = Column(String(120))
@@ -11,4 +11,4 @@ class Activos(Base):
     tipo = Column(String(50))
 
     # Relación (asegúrate que el modelo Operaciones existe)
-    operaciones = relationship('Operaciones', back_populates='Activo')
+    operaciones = relationship('Operaciones', back_populates='activo')
