@@ -1,19 +1,21 @@
+# app/utils/exchange_helper.py
 import ccxt
+import uuid
 
 class ExchangeHelper:
-    def __init__(self,id, exchange_name, api_key, secret_key):
-        self.id = id
+    def __init__(self, exchange_id, exchange_name, api_key, api_secret):
+        self.id = exchange_id  # Ahora aceptamos UUID
         self.exchange_name = exchange_name
         self.api_key = api_key
-        self.secret_key = secret_key
+        self.api_secret = api_secret  # Cambiado de secret_key a api_secret
         self.exchange = self.initialize_exchange()
 
     def initialize_exchange(self):
         try:
-            exchange_class = getattr(ccxt, self.exchange_name)
+            exchange_class = getattr(ccxt, self.exchange_name.lower())
             return exchange_class({
                 'apiKey': self.api_key,
-                'secret': self.secret_key,
+                'secret': self.api_secret,
                 'enableRateLimit': True,
             })
         except AttributeError:

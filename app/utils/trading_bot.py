@@ -1,3 +1,4 @@
+# app/utils/trading_bot.py
 import threading
 import time
 import json
@@ -7,12 +8,10 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 from ccxt import ExchangeError, NetworkError
 from app.db.database import engine
 from app.models.bot import Bot
-from app.models.exchanges import Exchanges
-from app.models.estrategias import Estrategias 
-from app.models.activos import Activos
+from app.models.exchange import Exchange
+from app.models.trade import Trade
+from app.models.bot_audit_log import BotAuditLog
 import ccxt
-from app.models.operacionactiva import OperacionActiva
-from app.models.auditoriabot import AuditoriaBot
 
 logging.basicConfig(
     level=logging.INFO,
@@ -27,7 +26,7 @@ class TradingBot:
         self.db_session = db_session or scoped_session(sessionmaker(bind=engine))  # Sesión por hilo
         self.bot = None
         self.exchange = None
-        self.active_operation = None
+        self.active_trade = None
         self.strategy_params = None
         self._load_bot_config()
 
@@ -38,16 +37,12 @@ class TradingBot:
             if not self.bot:
                 raise ValueError(f"Bot {self.bot_id} no encontrado")
 
-            exchange = self.db_session.query(Exchanges).get(self.bot.exchange_id)
-            activo = self.db_session.query(Activos).get(self.bot.activo_id)
-            estrategia = self.db_session.query(Estrategias).get(self.bot.estrategia_id)
-
-            if not all([exchange, activo, estrategia]):
-                raise ValueError("Configuración incompleta")
+            exchange = self.db_session.query(Exchange).get(self.bot.exchange_id)
+            if not exchange:
+                raise ValueError("Exchange no encontrado")
 
             self.exchange_config = exchange
-            self.activo = activo
-            self.strategy_params = json.loads(estrategia.parametros)
+            self.strategy_params = self.bot.config.get('strategy_params', {})
 
             self._init_exchange()
 
@@ -58,16 +53,16 @@ class TradingBot:
     def _init_exchange(self):
         """Inicializa el exchange con manejo de errores."""
         try:
-            exchange_class = getattr(ccxt, self.exchange_config.nombre.lower())
+            exchange_class = getattr(ccxt, self.exchange_config.name.lower())
             self.exchange = exchange_class({
                 'apiKey': self.exchange_config.api_key,
-                'secret': self.exchange_config.secret_key,
+                'secret': self.exchange_config.api_secret,
                 'enableRateLimit': True,
                 'options': {'adjustForTimeDifference': True}
             })
             self.exchange.load_markets()  # Precarga mercados
         except AttributeError:
-            raise ValueError(f"Exchange {self.exchange_config.nombre} no soportado")
+            raise ValueError(f"Exchange {self.exchange_config.name} no soportado")
         except ExchangeError as e:
             self._log_audit('ERROR', f"Error inicializando exchange: {str(e)}")
             raise
@@ -77,7 +72,7 @@ class TradingBot:
         max_retries = 3
         for _ in range(max_retries):
             try:
-                symbol = f"{self.activo.simbolo}/USDT"
+                symbol = self.bot.symbol
                 ticker = self.exchange.fetch_ticker(symbol)
                 ohlcv = self.exchange.fetch_ohlcv(symbol, '1m', limit=1)[0]
                 return {
@@ -96,15 +91,28 @@ class TradingBot:
     def _execute_strategy(self, market_data):
         """Ejecuta la estrategia con lógica de posición."""
         try:
-            if not self.active_operation:
+            # Buscar operaciones activas
+            active_trade = self.db_session.query(Trade).filter(
+                Trade.bot_id == self.bot_id,
+                Trade.status == 'open'
+            ).first()
+            
+            self.active_trade = active_trade
+            
+            # Lógica simplificada de estrategia como ejemplo
+            if not active_trade:
                 entry_threshold = self.strategy_params.get('entry_threshold', 0.01)
-                if market_data['price'] <= self.strategy_params.get('entry_price') * (1 - entry_threshold):
-                    return 'BUY', self.strategy_params.get('quantity', 1)
+                entry_price = self.strategy_params.get('entry_price', market_data['price'])
+                
+                if market_data['price'] <= entry_price * (1 - entry_threshold):
+                    return 'buy', self.strategy_params.get('quantity', 1)
             else:
-                take_profit = self.active_operation.take_profit
-                stop_loss = self.active_operation.stop_loss
+                take_profit = float(active_trade.price) * (1 + self.strategy_params.get('take_profit', 0.02))
+                stop_loss = float(active_trade.price) * (1 - self.strategy_params.get('stop_loss', 0.01))
+                
                 if market_data['price'] >= take_profit or market_data['price'] <= stop_loss:
-                    return 'CLOSE', self.active_operation.cantidad
+                    return 'sell', float(active_trade.amount)
+                    
             return None, None
         except Exception as e:
             self._log_audit('ERROR', f"Error en estrategia: {str(e)}")
@@ -113,21 +121,30 @@ class TradingBot:
     def _execute_trade(self, action, quantity):
         """Ejecuta órdenes con manejo de errores."""
         try:
-            symbol = f"{self.activo.simbolo}/USDT"
-            if action == 'BUY':
+            symbol = self.bot.symbol
+            
+            if action == 'buy':
                 order = self.exchange.create_market_buy_order(symbol, quantity)
-                self.active_operation = OperacionActiva(
+                
+                # Crear un nuevo trade
+                trade = Trade(
                     bot_id=self.bot_id,
-                    cantidad=quantity,
-                    precio_entrada=order['price'],
-                    take_profit=order['price'] * (1 + self.strategy_params.get('take_profit', 0.02)),
-                    stop_loss=order['price'] * (1 - self.strategy_params.get('stop_loss', 0.01))
+                    symbol=symbol,
+                    side='buy',
+                    amount=quantity,
+                    price=order['price'],
+                    status='open'
                 )
-                self.db_session.add(self.active_operation)
-            elif action == 'CLOSE':
+                self.db_session.add(trade)
+                
+            elif action == 'sell':
                 order = self.exchange.create_market_sell_order(symbol, quantity)
-                self.db_session.delete(self.active_operation)
-                self.active_operation = None
+                
+                # Cerrar el trade activo
+                if self.active_trade:
+                    self.active_trade.status = 'closed'
+                    self.active_trade.updated_at = datetime.utcnow()
+                
             self.db_session.commit()
             return order
         except Exception as e:
@@ -138,12 +155,11 @@ class TradingBot:
     def _log_audit(self, event_type, description, details=None):
         """Registra auditorías de forma segura."""
         try:
-            audit = AuditoriaBot(
+            audit = BotAuditLog(
                 bot_id=self.bot_id,
-                fecha=datetime.utcnow(),
-                tipo_evento=event_type,
-                descripcion=description,
-                datos=json.dumps(details) if details else None
+                event_type=event_type,
+                description=description,
+                data=details
             )
             self.db_session.add(audit)
             self.db_session.commit()
@@ -175,7 +191,9 @@ class TradingBot:
                         'cantidad': quantity
                     })
                 
-                time.sleep(self.bot.intervalo)
+                # Intervalo de verificación (usar el del config o un default)
+                interval = self.bot.config.get('interval', 60)  
+                time.sleep(interval)
             
             except Exception as e:
                 self.running = False
